@@ -26,7 +26,7 @@ setup(
     version=VERSION,
     description='Library for manipulating neuromorpho resources.',
     long_description=long_description,
-    download_url='https://github.com/j6k4m8/neuromorpholib/tarball/' + __version__,
+    download_url='https://github.com/j6k4m8/neuromorpholib/tarball/' + VERSION,
     license='Apache 2.0',
     classifiers=[
       'Development Status :: 4 - Beta',
