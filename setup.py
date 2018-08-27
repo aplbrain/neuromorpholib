@@ -3,10 +3,6 @@ from codecs import open
 from os import path
 from neuromorpholib import __version__
 
-# to update
-# python setup.py sdist
-# python setup.py bdist_wheel
-# twine upload dist/*
 
 here = path.abspath(path.dirname(__file__))
 
@@ -39,7 +35,8 @@ setup(
     keywords=[
             "neuron",
             "morphology",
-            "neuroscience"
+            "neuroscience",
+            "graph"
         ],
     packages=find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
