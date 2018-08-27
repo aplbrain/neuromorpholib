@@ -1,7 +1,9 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
-from neuromorpholib import __version__
+
+
+VERSION = "0.1.0"
 
 
 here = path.abspath(path.dirname(__file__))
@@ -21,7 +23,7 @@ dependency_links = [
 
 setup(
     name='neuromorpholib',
-    version=__version__,
+    version=VERSION,
     description='Library for manipulating neuromorpho resources.',
     long_description=long_description,
     download_url='https://github.com/j6k4m8/neuromorpholib/tarball/' + __version__,
