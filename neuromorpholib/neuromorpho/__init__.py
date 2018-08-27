@@ -55,7 +55,11 @@ class NeuroMorpho:
 
         return neuron_listing
 
-    def download_swc(self, archive, neuron_name, text_only=False):
+    def download_swc(self, archive, neuron_name=None, text_only=False):
+
+        if neuron_name is None and isinstance(archive, dict):
+            return download_swc(archive['archive'], archive['neuron_name'], text_only)
+
         ext = "dableFiles/{}/CNG%20version/{}.CNG.swc".format(
             archive.lower(),
             neuron_name
