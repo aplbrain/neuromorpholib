@@ -1,5 +1,10 @@
 # neuromorpholib
 
+## Installation
+
+```shell
+pip3 install neuromorpholib
+```
 
 ## Usage
 A simple download of known dataset and name:
