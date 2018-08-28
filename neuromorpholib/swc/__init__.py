@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
 """
 SWC: Manipulate graph data in SWC format.
 
 Includes read/write to disk.
 """
+from typing import List, Tuple
 
 import networkx as nx
 import numpy as np
@@ -12,7 +14,7 @@ class NodeTypes:
     """
     Enum of types for nodes in SWC.
 
-    range(7)
+    range(8)
     """
 
     UNDEFINED = 0
@@ -25,7 +27,7 @@ class NodeTypes:
     CUSTOM = 7
 
     @staticmethod
-    def is_valid(cls, t):
+    def is_valid(cls, t: int) -> bool:
         """
         Determine if a node type is a valid SWC-spec type.
 
@@ -40,8 +42,20 @@ class NodeTypes:
 
 
 class NeuronMorphology:
+    """
+    A wrapper class for neuron morphologies.
+
+    Contains a graph representation of the morphology in nx.DiGraph format.
+    """
 
     def __init__(self, **kwargs):
+        """
+        Create a new NeuronMorphology.
+
+        Arguments:
+            source (NeuronMorphology): Optional. Source to copy from
+
+        """
         if 'source' in kwargs:
             if isinstance(kwargs['source'], NeuronMorphology):
                 self._skeleton = kwargs['source'].get_graph()
@@ -56,12 +70,14 @@ class NeuronMorphology:
         else:
             self._skeleton = nx.DiGraph()
 
-    def get_graph(self, copy=True):
+    def get_graph(self, copy: bool = True) -> nx.DiGraph:
         """
-        Returns the underlying graph data structure. By default, it returns
-        a copy, so that modifications to this graph do not affect the parent
-        NeuronMorphology (which is expected behavior). However, by explicitly
-        passing `copy=False`, you can request a pointer to the same graph.
+        Return the underlying graph data structure.
+
+        By default, this returns a copy, so that modifications to this graph do
+        not affect the parent NeuronMorphology (which is expected behavior).
+        However, by explicitly passing `copy=False`, you can request a pointer
+        to the same graph.
 
         Arguments:
             copy (bool : True): If a copy should be returned instead of a
@@ -76,7 +92,11 @@ class NeuronMorphology:
         else:
             return self._skeleton
 
-    def add_node(self, id, t=None, xyz=None, r=None):
+    def add_node(
+            self, id: int, t: int = None,
+            xyz: Tuple[int, int, int] = None,
+            r: float = None
+    ) -> None:
         """
         Add a new node to the skeleton.
 
@@ -91,7 +111,7 @@ class NeuronMorphology:
         """
         return self._skeleton.add_node(id, t=t, xyz=xyz, r=r)
 
-    def add_edge(self, start, end):
+    def add_edge(self, start: int, end: int) -> None:
         """
         Add a new edge to the skeleton.
 
@@ -105,7 +125,7 @@ class NeuronMorphology:
         """
         return self._skeleton.add_edge(start, end)
 
-    def get_branch_points(self):
+    def get_branch_points(self) -> List[int]:
         """
         Returns a list of all node IDs where degree > 2.
 
@@ -115,7 +135,7 @@ class NeuronMorphology:
         Returns:
             int[]: Node IDs where degree > 2
         """
-        results = []
+        results: List[int] = []
         for start, stops in self._skeleton.adj.items():
             if len(stops.keys()) > 2:
                 results.append(start)
@@ -127,7 +147,7 @@ class NeuronMorphology:
         """
         raise NotImplementedError
 
-    def smoothed(self):
+    def smoothed(self) -> nx.DiGraph:
         """
         Returns a _copy_ of this morphology as a smoothed graph.
         # TODO: This is very inefficient.
@@ -150,8 +170,14 @@ class NeuronMorphology:
         return gcopy
 
 
-def read_swc(swc_str):
+def read_swc(swc_str: str) -> NeuronMorphology:
     """
+    Construct a NeuronMorphology from a SWC string.
+
+    For file imports, see also `load_swc`.
+
+    Returns:
+        NeuronMorphology
     """
     lines = swc_str.split("\n")
     neuron = NeuronMorphology()
@@ -177,9 +203,11 @@ def read_swc(swc_str):
     return neuron
 
 
-def load_swc(filename):
+def load_swc(filename: str) -> NeuronMorphology:
     """
     Loads a SWC from disk, into a NeuronMorphology object.
+
+    For str imports, see also `read_swc`.
 
     Arguments:
         filename (str)
@@ -196,7 +224,7 @@ def load_swc(filename):
         raise ValueError("Invalid file {}".format(filename))
 
 
-def save_swc(filename, nmorpho):
+def save_swc(filename: str, nmorpho: str) -> str:
     """
     Saves a morphology to disk in the form of a SWC file.
 
