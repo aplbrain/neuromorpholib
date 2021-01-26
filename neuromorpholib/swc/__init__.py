@@ -171,11 +171,11 @@ class NeuronMorphology:
         return gcopy
 
     @staticmethod
-    def from_file(filename: str) -> "NeuronMorphology":
+    def from_file(filename: str):
         return load_swc(filename)
 
     @staticmethod
-    def from_string(swc: str) -> "NeuronMorphology":
+    def from_string(swc: str):
         return read_swc(swc)
 
     def translate(self, translation: Tuple[int, int, int], inplace=False):
