@@ -2,7 +2,6 @@
 
 from typing import List, Union
 import requests
-import glob
 
 from .. import swc
 
@@ -26,7 +25,7 @@ class NeuroMorpho:
         self.cache = {}
         self.cache_location = cache_location
         self.base_url = "http://neuromorpho.org/"
-        self._permitted_fields = self.get_json("api/neuron/fields")['Neuron Fields']
+        self._permitted_fields = self.get_json("api/neuron/fields")["Neuron Fields"]
 
     def url(self, ext: str = "") -> str:
         """
@@ -55,12 +54,10 @@ class NeuroMorpho:
         for k, _ in query.items():
             if k not in self._permitted_fields:
                 raise ValueError(
-                    "Key {} is not a valid search parameter!\n".format(k) +
-                    "Must be one of:\n{}".format(self._permitted_fields)
+                    "Key {} is not a valid search parameter!\n".format(k)
+                    + "Must be one of:\n{}".format(self._permitted_fields)
                 )
-        query_string = "&".join([
-            "fq={}:{}".format(k, v) for k, v in query.items()
-        ])
+        query_string = "&".join(["fq={}:{}".format(k, v) for k, v in query.items()])
 
         listing = self.get_json(
             "api/neuron/select/?" + query_string[1:] + "&page={}".format(page)
@@ -69,7 +66,7 @@ class NeuroMorpho:
             results = listing["_embedded"]["neuronResources"]
             print(
                 "Downloading page {} for {} neurons, ending in {}".format(
-                    page, len(results), results[-1]['neuron_name']
+                    page, len(results), results[-1]["neuron_name"]
                 )
             )
             neuron_listing = results
@@ -77,22 +74,24 @@ class NeuroMorpho:
             return []
 
         if (
-            "page" in listing and
-            "totalPages" in listing["page"] and
-            listing['page']['totalPages'] >= page
+            "page" in listing
+            and "totalPages" in listing["page"]
+            and listing["page"]["totalPages"] >= page
         ):
             if limit is None or len(neuron_listing) < limit:
                 if limit is None:
-                    neuron_listing += self.search(query, page=page+1)
+                    neuron_listing += self.search(query, page=page + 1)
                 else:
-                    neuron_listing += self.search(query, page=page+1, limit=limit-50)
+                    neuron_listing += self.search(
+                        query, page=page + 1, limit=limit - 50
+                    )
             else:
                 return neuron_listing
         return neuron_listing
 
     def download_swc(
-            self, archive: str, neuron_name: str = None, text_only: bool = False
-    ) -> Union[str, 'NeuronMorphology']:
+        self, archive: str, neuron_name: str = None, text_only: bool = False
+    ) -> Union[str, "swc.NeuronMorphology"]:
         """
         Download a SWC file (or SWC string).
 
@@ -100,19 +99,16 @@ class NeuroMorpho:
         """
         if neuron_name is None and isinstance(archive, dict):
             return self.download_swc(
-                archive['archive'], archive['neuron_name'], text_only
+                archive["archive"], archive["neuron_name"], text_only
             )
         if neuron_name is None and isinstance(archive, int):
             data = self.get_neuron_info(archive)
-            return self.download_swc(
-                data['archive'], data['neuron_name'], text_only
-            )
+            return self.download_swc(data["archive"], data["neuron_name"], text_only)
         ext = "dableFiles/{}/CNG%20version/{}.CNG.swc".format(
-            archive.lower(),
-            neuron_name
+            archive.lower(), neuron_name
         )
         res = requests.get(self.url(ext))
-        if ("<html>" in res.text):
+        if "<html>" in res.text:
             raise ValueError("Failed to fetch from {}.".format(ext))
 
         if text_only:
