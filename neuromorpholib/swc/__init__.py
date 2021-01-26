@@ -162,7 +162,7 @@ class NeuronMorphology:
             gcopy_old = gcopy
             old_count = len(gcopy_old.adj)
             for node, connections in gcopy_old.adj.items():
-                if len(connections) is 2:
+                if len(connections) == 2:
                     start, stop = connections.keys()
                     gcopy.add_edge(start, stop)
                     gcopy.remove_node(node)
