@@ -1,7 +1,7 @@
 # neuromorpholib
 
 [![Codecov](https://img.shields.io/codecov/c/github/aplbrain/neuromorpholib?style=for-the-badge)](https://codecov.io/gh/aplbrain/neuromorpholib)
-[![PyPI](https://img.shields.io/pypi/v/neuromorpholib?style=for-the-badge))](https://pypi.org/project/neuromorpholib/)
+[![PyPI](https://img.shields.io/pypi/v/neuromorpholib?style=for-the-badge)](https://pypi.org/project/neuromorpholib/)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/aplbrain/neuromorpholib/Python%20Tests?style=for-the-badge)](https://github.com/aplbrain/neuromorpholib/actions?query=workflow%3A%22Python+Tests%22)
 
 ## Installation
