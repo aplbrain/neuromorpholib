@@ -4,10 +4,10 @@ SWC: Manipulate graph data in SWC format.
 
 Includes read/write to disk.
 """
-from typing import List, Tuple
+from typing import List, Tuple, Union
+import math
 
 import networkx as nx
-import numpy as np
 
 
 class NodeTypes:
@@ -56,19 +56,22 @@ class NeuronMorphology:
             source (NeuronMorphology): Optional. Source to copy from
 
         """
-        if 'source' in kwargs:
-            if isinstance(kwargs['source'], NeuronMorphology):
-                self._skeleton = kwargs['source'].get_graph()
-            elif isinstance(kwargs['source'], nx.Graph):
-                self._skeleton = kwargs['source']
+        if "source" in kwargs:
+            if isinstance(kwargs["source"], NeuronMorphology):
+                self._skeleton = kwargs["source"].get_graph()
+            elif isinstance(kwargs["source"], nx.Graph):
+                self._skeleton = kwargs["source"]
             else:
                 raise ValueError(
-                    "The `source` argument passed to the NeuronMorphology " +
-                    "constructor must be a graph or a NeuronMorphology." +
-                    "Type was {}.".format(type(kwargs['source']))
+                    "The `source` argument passed to the NeuronMorphology "
+                    + "constructor must be a graph or a NeuronMorphology."
+                    + "Type was {}.".format(type(kwargs["source"]))
                 )
         else:
             self._skeleton = nx.DiGraph()
+
+    def __len__(self):
+        return len(self._skeleton)
 
     def get_graph(self, copy: bool = True) -> nx.DiGraph:
         """
@@ -93,9 +96,7 @@ class NeuronMorphology:
             return self._skeleton
 
     def add_node(
-            self, id: int, t: int = None,
-            xyz: Tuple[int, int, int] = None,
-            r: float = None
+        self, id: int, t: int = None, xyz: Tuple[int, int, int] = None, r: float = None
     ) -> None:
         """
         Add a new node to the skeleton.
@@ -136,8 +137,8 @@ class NeuronMorphology:
             int[]: Node IDs where degree > 2
         """
         results: List[int] = []
-        for start, stops in self._skeleton.adj.items():
-            if len(stops.keys()) > 2:
+        for start, stops in self._skeleton.pred.items():
+            if len(stops.keys()) >= 2:
                 results.append(start)
         return results
 
@@ -169,6 +170,157 @@ class NeuronMorphology:
             new_count = len(gcopy.adj)
         return gcopy
 
+    @staticmethod
+    def from_file(filename: str) -> "NeuronMorphology":
+        return load_swc(filename)
+
+    @staticmethod
+    def from_string(swc: str) -> "NeuronMorphology":
+        return read_swc(swc)
+
+    def translate(self, translation: Tuple[int, int, int], inplace=False):
+        """
+        Translate the target neuron morphology (affine translation) in XYZ.
+
+        Arguments:
+            translation (Tuple[int, int, int]): The translation to perform
+            inplace (bool: False): Whether to perform the translation on this
+                morphology (True) or on a copy (False).
+
+        Returns:
+            The morphology upon which the translation was performed
+
+        """
+        if inplace:
+            target = self
+        else:
+            target = NeuronMorphology(source=self)
+        for node in target._skeleton.nodes():
+            current = target._skeleton.nodes[node]["xyz"]
+            target._skeleton.nodes[node]["xyz"] = [
+                current[0] + translation[0],
+                current[1] + translation[1],
+                current[2] + translation[2],
+            ]
+        return target
+
+    def scale(self, scale: Union[float, Tuple[float, float, float]], inplace=False):
+        """
+        Scale the target neuron morphology.
+
+        Arguments:
+            scale (Union[float, Tuple[float, float, float]]): The scale to
+                perform. If a tuple, [X,Y,Z]. If a scalar, perform an isometric
+                scale on all three axes.
+            inplace (bool: False): Whether to perform the translation on this
+                morphology (True) or on a copy (False).
+
+        Returns:
+            The morphology upon which the scaling was performed
+
+        """
+        if inplace:
+            target = self
+        else:
+            target = NeuronMorphology(source=self)
+
+        if isinstance(scale, (float, int)):
+            scale = [scale, scale, scale]
+
+        for node in target._skeleton.nodes():
+            current = target._skeleton.nodes[node]["xyz"]
+            target._skeleton.nodes[node]["xyz"] = [
+                current[0] * scale[0],
+                current[1] * scale[1],
+                current[2] * scale[2],
+            ]
+        return target
+
+    def translate(self, translation: Tuple[int, int, int], inplace=False):
+        """
+        Translate the target neuron morphology (affine translation) in XYZ.
+
+        Arguments:
+            translation (Tuple[int, int, int]): The translation to perform
+            inplace (bool: False): Whether to perform the translation on this
+                morphology (True) or on a copy (False).
+
+        Returns:
+            The morphology upon which the translation was performed
+
+        """
+        if inplace:
+            target = self
+        else:
+            target = NeuronMorphology(source=self)
+        for node in target._skeleton.nodes():
+            current = target._skeleton.nodes[node]["xyz"]
+            target._skeleton.nodes[node]["xyz"] = [
+                current[0] + translation[0],
+                current[1] + translation[1],
+                current[2] + translation[2],
+            ]
+        return target
+
+    def rotate(
+        self, rotation: Tuple[int, int, int], inplace: bool = False, _p: int = 10
+    ):
+        """
+        Perform a rotation on the neuron morphology.
+
+        If inplace is True, will perform the rotation on the current object.
+
+        Arguments:
+            rotation (Tuple[int, int, int]): The rotation to perform, in
+                pitch-roll-yaw order. Units are in radians.
+            inplace (bool: False): Whether to perform the rotation on this
+                morphology (True) or on a copy (False).
+            _p (int: 10): Digits of precision. Because SWC files are text-
+                files, higher precision here costs more in terms of file
+                storage. Values of 5 or greater should be fine for most
+                purposes, unless coordinates are small to begin with.
+
+        Returns:
+            The morphology upon which the translation was performed
+
+        """
+
+        # Formula adapted from https://stackoverflow.com/a/34060479/979255
+        pitch, roll, yaw = rotation
+        cosa = math.cos(yaw)
+        sina = math.sin(yaw)
+
+        cosb = math.cos(pitch)
+        sinb = math.sin(pitch)
+
+        cosc = math.cos(roll)
+        sinc = math.sin(roll)
+
+        Axx = cosa * cosb
+        Axy = cosa * sinb * sinc - sina * cosc
+        Axz = cosa * sinb * cosc + sina * sinc
+
+        Ayx = sina * cosb
+        Ayy = sina * sinb * sinc + cosa * cosc
+        Ayz = sina * sinb * cosc - cosa * sinc
+
+        Azx = -sinb
+        Azy = cosb * sinc
+        Azz = cosb * cosc
+
+        if inplace:
+            target = self
+        else:
+            target = NeuronMorphology(source=self)
+
+        for node in target._skeleton.nodes():
+            current = target._skeleton.nodes[node]["xyz"]
+            target._skeleton.nodes[node]["xyz"] = [
+                math.round(Axx * current[0] + Axy * current[1] + Axz * current[2], _p),
+                math.round(Ayx * current[0] + Ayy * current[1] + Ayz * current[2], _p),
+                math.round(Azx * current[0] + Azy * current[1] + Azz * current[2], _p),
+            ]
+
 
 def read_swc(swc_str: str) -> NeuronMorphology:
     """
@@ -188,18 +340,10 @@ def read_swc(swc_str: str) -> NeuronMorphology:
             continue
         else:
             attrs = [float(i) for i in line.split()]
-            neuron.add_node(
-                int(attrs[0]),
-                t=int(attrs[1]),
-                xyz=attrs[2:5],
-                r=attrs[5]
-            )
+            neuron.add_node(int(attrs[0]), t=int(attrs[1]), xyz=attrs[2:5], r=attrs[5])
             last_index = attrs[-1]
-            if last_index > 0:
-                neuron.add_edge(
-                    int(attrs[0]),
-                    int(attrs[-1])
-                )
+            if last_index >= 0:
+                neuron.add_edge(int(attrs[0]), int(attrs[-1]))
     return neuron
 
 
@@ -247,14 +391,16 @@ def save_swc(filename: str, nmorpho: str) -> str:
             parent = parent[0][1]
 
         #             n  T xyz R  P
-        lines.append("{} {} {} {} {}".format(
-            str(node[0]),
-            str(node[1]['t']),
-            " ".join([str(i) for i in node[1]['xyz']]),
-            str(node[1]['r']),
-            str(parent)
-        ))
-    with open(filename, 'w') as swc_output:
-        swc_output.write('\n'.join(lines))
-        swc_output.write('\n')
+        lines.append(
+            "{} {} {} {} {}".format(
+                str(node[0]),
+                str(node[1]["t"]),
+                " ".join([str(i) for i in node[1]["xyz"]]),
+                str(node[1]["r"]),
+                str(parent),
+            )
+        )
+    with open(filename, "w") as swc_output:
+        swc_output.write("\n".join(lines))
+        swc_output.write("\n")
     return filename
