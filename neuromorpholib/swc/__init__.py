@@ -4,10 +4,12 @@ SWC: Manipulate graph data in SWC format.
 
 Includes read/write to disk.
 """
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 import math
+import matplotlib.pyplot as plt
 
 import networkx as nx
+import numpy as np
 
 
 class NodeTypes:
@@ -142,11 +144,32 @@ class NeuronMorphology:
                 results.append(start)
         return results
 
-    def get_branch_angle(self, abc):
+    def get_branch_angles(self) -> Dict[int, float]:
+        """Get the branch angles between all connected nodes."""
+
+        angles = {}
+        for node in self._skeleton.nodes():
+            neighbors = [i for i in nx.all_neighbors(self._skeleton, node)]
+            if (len(neighbors)) == 2:
+                # This is not a branch point, so we can compute:
+                angles[node] = self.get_branch_angle((neighbors[0], node, neighbors[1]))
+        return angles
+
+    def get_branch_angle(self, abc: Tuple[int, int, int]):
         """
         Returns the minimum branch angle between edges AB and BC.
         """
-        raise NotImplementedError
+        a, b, c = abc
+        apos = np.array(self._skeleton.nodes[a]["xyz"])
+        bpos = np.array(self._skeleton.nodes[b]["xyz"])
+        cpos = np.array(self._skeleton.nodes[c]["xyz"])
+
+        ba_unit_vector = apos - bpos
+        ba_unit_vector /= np.linalg.norm(ba_unit_vector)
+        bc_unit_vector = cpos - bpos
+        bc_unit_vector /= np.linalg.norm(bc_unit_vector)
+        dot_product = np.dot(ba_unit_vector, bc_unit_vector)
+        return np.arccos(dot_product)
 
     def smoothed(self) -> nx.DiGraph:
         """
@@ -225,7 +248,7 @@ class NeuronMorphology:
             target = NeuronMorphology(source=self)
 
         if isinstance(scale, (float, int)):
-            scale = [scale, scale, scale]
+            scale = (scale, scale, scale)
 
         for node in target._skeleton.nodes():
             current = target._skeleton.nodes[node]["xyz"]
@@ -233,32 +256,6 @@ class NeuronMorphology:
                 current[0] * scale[0],
                 current[1] * scale[1],
                 current[2] * scale[2],
-            ]
-        return target
-
-    def translate(self, translation: Tuple[int, int, int], inplace=False):
-        """
-        Translate the target neuron morphology (affine translation) in XYZ.
-
-        Arguments:
-            translation (Tuple[int, int, int]): The translation to perform
-            inplace (bool: False): Whether to perform the translation on this
-                morphology (True) or on a copy (False).
-
-        Returns:
-            The morphology upon which the translation was performed
-
-        """
-        if inplace:
-            target = self
-        else:
-            target = NeuronMorphology(source=self)
-        for node in target._skeleton.nodes():
-            current = target._skeleton.nodes[node]["xyz"]
-            target._skeleton.nodes[node]["xyz"] = [
-                current[0] + translation[0],
-                current[1] + translation[1],
-                current[2] + translation[2],
             ]
         return target
 
@@ -316,10 +313,22 @@ class NeuronMorphology:
         for node in target._skeleton.nodes():
             current = target._skeleton.nodes[node]["xyz"]
             target._skeleton.nodes[node]["xyz"] = [
-                math.round(Axx * current[0] + Axy * current[1] + Axz * current[2], _p),
-                math.round(Ayx * current[0] + Ayy * current[1] + Ayz * current[2], _p),
-                math.round(Azx * current[0] + Azy * current[1] + Azz * current[2], _p),
+                round(Axx * current[0] + Axy * current[1] + Axz * current[2], _p),
+                round(Ayx * current[0] + Ayy * current[1] + Ayz * current[2], _p),
+                round(Azx * current[0] + Azy * current[1] + Azz * current[2], _p),
             ]
+        return target
+
+    def draw(self, node_radius_multiplier: int = 10):
+        k = self._skeleton
+        pos = {n: a["xyz"][:2] for n, a in k.nodes(data=True)}
+        nx.draw(
+            nx.Graph(k),
+            pos=pos,
+            width=5,
+            node_size=[n["r"] * node_radius_multiplier for _, n in k.nodes(data=True)],
+            arrowsize=1,
+        )
 
 
 def read_swc(swc_str: str) -> NeuronMorphology:
