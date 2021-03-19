@@ -377,7 +377,7 @@ def load_swc(filename: str) -> NeuronMorphology:
         raise ValueError("Invalid file {}".format(filename))
 
 
-def save_swc(filename: str, nmorpho: str) -> str:
+def save_swc(filename: str, nmorpho: NeuronMorphology) -> str:
     """
     Saves a morphology to disk in the form of a SWC file.
 
@@ -390,14 +390,15 @@ def save_swc(filename: str, nmorpho: str) -> str:
 
     """
     lines = []
-    _edges = nmorpho.get_graph().edges()
+    g = nmorpho.get_graph()
+    _edges = g.edges()
     # Loop through the nodes. Pass `True` to include metadata:
-    for node in nmorpho.get_graph().nodes(data=True):
-        parent = nmorpho.get_graph().edges([node[0]])
+    for node in g.nodes(data=True):
+        parent = [i for i in g.succ[node[0]]]
         if parent == []:
             parent = -1
         else:
-            parent = parent[0][1]
+            parent = parent[0]
 
         #             n  T xyz R  P
         lines.append(
