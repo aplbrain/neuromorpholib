@@ -377,7 +377,7 @@ def load_swc(filename: str) -> NeuronMorphology:
         raise ValueError("Invalid file {}".format(filename))
 
 
-def save_swc(filename: str, nmorpho: str) -> str:
+def save_swc(filename: str, nmorpho: NeuronMorphology) -> str:
     """
     Saves a morphology to disk in the form of a SWC file.
 
