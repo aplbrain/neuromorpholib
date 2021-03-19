@@ -392,7 +392,7 @@ def save_swc(filename: str, nmorpho: str) -> str:
     lines = []
     _edges = nmorpho.get_graph().edges()
     # Loop through the nodes. Pass `True` to include metadata:
-    for node in nmorpho.get_graph().nodes_iter(True):
+    for node in nmorpho.get_graph().nodes(data=True):
         parent = nmorpho.get_graph().edges([node[0]])
         if parent == []:
             parent = -1
