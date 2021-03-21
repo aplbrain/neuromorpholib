@@ -75,3 +75,40 @@ n.scale(3)
 n.translate([4, 44, 10])
 n.rotate([0, 0, math.pi/2])
 ```
+
+### Rendering SWCs
+
+All of the following visualization techniques assume you have a single NeuronMorphology object, downloaded perhaps like this:
+
+```python
+from neuromorpholib import neuromorpho
+
+nmo = neuromorpho.NeuroMorpho()
+acc1 = nmo.download_swc("martone", "ACC1")
+```
+
+#### Using matplotlib
+
+```python
+import networkx as nx
+
+g = acc1.get_graph()
+nx.draw(g, pos={n: a['xyz'][:2] for n, a in g.nodes(data=True)}, node_size=0)
+```
+
+<img width="427" alt="image" src="https://user-images.githubusercontent.com/693511/111907838-68b84400-8a2d-11eb-94b6-8b16b708e881.png">
+
+
+#### Using [pytri](https://github.com/aplbrain/pytri)
+
+This will return an interactive 3D turntable in a Jupyter Notebook.
+
+```
+from pytri import Figure
+
+fig = Figure()
+fig.graph(acc1.get_graph(), pos_attribute="xyz")
+fig.show()
+```
+
+<img width="451" alt="image" src="https://user-images.githubusercontent.com/693511/111907905-930a0180-8a2d-11eb-8f17-f450edc80dcc.png">
