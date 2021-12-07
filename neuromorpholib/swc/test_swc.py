@@ -121,3 +121,17 @@ def test_readwrite_swc():
     save_swc(f.name, load_swc(f.name))
     f.seek(0)
     assert f.read().strip() == DEMO_SWC.strip()
+
+
+def test_total_length():
+    n = NeuronMorphology()
+    n.add_node(1, xyz=[0, 0, 0])
+    n.add_node(2, xyz=[0, 0, 1])
+    assert n.get_total_length() == 0
+
+    n.add_edge(1, 2)
+    assert n.get_total_length() == 1
+
+    n.add_node(3, xyz=[0, 0, -2])
+    n.add_edge(2, 3)
+    assert n.get_total_length() == 4

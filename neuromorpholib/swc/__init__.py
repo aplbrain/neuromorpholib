@@ -6,7 +6,6 @@ Includes read/write to disk.
 """
 from typing import Dict, List, Tuple, Union
 import math
-import matplotlib.pyplot as plt
 
 import networkx as nx
 import numpy as np
@@ -170,6 +169,52 @@ class NeuronMorphology:
         bc_unit_vector /= np.linalg.norm(bc_unit_vector)
         dot_product = np.dot(ba_unit_vector, bc_unit_vector)
         return np.arccos(dot_product)
+
+    def get_distance_between_nodes(self, a: int, b: int) -> float:
+        """
+        Returns the distance between two nodes.
+
+        Arguments:
+            a (int): The first node ID
+            b (int): The second node ID
+
+        Returns:
+            float: The distance between the two nodes
+        """
+        return np.linalg.norm(
+            np.array(self._skeleton.nodes[a]["xyz"])
+            - np.array(self._skeleton.nodes[b]["xyz"])
+        )
+
+    def get_path_length(self, start: int, end: int) -> float:
+        """
+        Get the path length between two nodes.
+
+        Arguments:
+            start (int): The origin of the path (ID)
+            stop (int): The end of the path (ID)
+
+        Returns:
+            float: The length of the path
+
+        """
+        # Get the shortest path IDs:
+        path = nx.shortest_path(self._skeleton, start, end)
+        # Compute the path length. The length is the sum of x1y1z1 - x0y0z0:
+        length = 0
+        for i in range(len(path) - 1):
+            length += self.get_distance_between_nodes(path[i], path[i + 1])
+        return length
+
+    def get_total_length(self) -> float:
+        """
+        Returns the total length of the neuron's segments.
+        """
+        # Iterate over all edges and add the length of each edge:
+        total_length = 0
+        for start, end in self._skeleton.edges():
+            total_length += self.get_distance_between_nodes(start, end)
+        return total_length
 
     def smoothed(self) -> nx.DiGraph:
         """
