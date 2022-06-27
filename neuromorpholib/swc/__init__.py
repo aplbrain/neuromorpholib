@@ -364,7 +364,7 @@ class NeuronMorphology:
             ]
         return target
 
-    def draw(self, node_radius_multiplier: int = 10):
+    def draw(self, node_radius_multiplier: int = 10, **kwargs):
         k = self._skeleton
         pos = {n: a["xyz"][:2] for n, a in k.nodes(data=True)}
         nx.draw(
@@ -373,7 +373,26 @@ class NeuronMorphology:
             width=5,
             node_size=[n["r"] * node_radius_multiplier for _, n in k.nodes(data=True)],
             arrowsize=1,
+            **kwargs
         )
+
+    def get_closest_node(self, xyz: Tuple[float, float, float]):
+        """
+        Returns the node closest to the given coordinates.
+
+        Arguments:
+            xyz (Tuple[float, float, float]): The coordinates to search for.
+
+        Returns:
+            The node closest to the given coordinates.
+
+        """
+        npxyz = np.array(xyz)
+        dists = {
+            n: np.linalg.norm(a["xyz"] - npxyz)
+            for n, a in self._skeleton.nodes(data=True)
+        }
+        return min(dists, key=dists.get)
 
 
 def read_swc(swc_str: str) -> NeuronMorphology:
