@@ -1,7 +1,7 @@
 # CHANGELOG
 
 -   **Unreleased**
-    -   Add `NeuronMorphology#get_distance_between_nodes`, `get_path_length`, and `get_total_length`
+    -   Add `NeuronMorphology#get_distance_between_nodes`, `get_path_length`, `get_total_length`, and `get_closest_node` methods.
 -   **0.2.2** (July 24 2021)
     -   Update PyPI package and improve documentation
 -   **0.2.1**
